@@ -1,15 +1,15 @@
 from models.property import Property
 from sqlalchemy.orm import Session
 
-# Portfolio-level fixed monthly expenses (32nd Street Triplex)
+# Portfolio-level fixed monthly expenses (32nd Street Triplex - shared across all units)
 PORTFOLIO_EXPENSES = {
     'mortgage': 1796.0,
     'loan': 909.0,
-    'property_tax': round((4609.0 * 2) / 12, 2),  # $768/mo
+    'property_tax': round((4609.0 * 2) / 12, 2),
     'utilities': 150.0,
 }
 
-PROPERTY_MGMT_PCT = 0.05  # 5% of gross rent
+PROPERTY_MGMT_PCT = 0.05
 
 
 def get_monthly_expenses(monthly_rent: float) -> dict:
@@ -22,7 +22,7 @@ def get_monthly_expenses(monthly_rent: float) -> dict:
     }
 
 
-def calculate_roi(property: Property, db: Session) -> dict:
+def calculate_roi(property: Property, db: Session, portfolio_expenses: float = None) -> dict:
     total_invested = property.spent_so_far or 0
     total_budget = property.total_budget or 0
     projected_rents = property.projected_rents or {}
@@ -30,16 +30,16 @@ def calculate_roi(property: Property, db: Session) -> dict:
     monthly_rent = sum(float(v) for v in projected_rents.values()) if projected_rents else 0
     annual_gross = monthly_rent * 12
 
-    # Real operating expenses
-    monthly_expenses = get_monthly_expenses(monthly_rent)
-    total_monthly_expenses = monthly_expenses['total']
-    annual_expenses = total_monthly_expenses * 12
+    # Per-property ROI uses only property management as expense (mortgage is portfolio-level)
+    mgmt = round(monthly_rent * PROPERTY_MGMT_PCT, 2)
+    monthly_exp = mgmt
+    annual_expenses = monthly_exp * 12
     annual_net = annual_gross - annual_expenses
     monthly_cashflow = annual_net / 12
 
     roi_on_budget = (annual_net / total_budget * 100) if total_budget > 0 else 0
     roi_on_spent = (annual_net / total_invested * 100) if total_invested > 0 else 0
-    cap_rate = (annual_gross * 0.65 / total_budget * 100) if total_budget > 0 else 0  # NOI-based cap rate
+    cap_rate = (annual_gross * 0.65 / total_budget * 100) if total_budget > 0 else 0
     payback_months = (total_budget / annual_net * 12) if annual_net > 0 else None
     budget_used_pct = (total_invested / total_budget * 100) if total_budget > 0 else 0
     remaining = total_budget - total_invested
@@ -69,11 +69,6 @@ def calculate_roi(property: Property, db: Session) -> dict:
             "annual_net": round(annual_net, 2),
             "monthly_cashflow": round(monthly_cashflow, 2),
             "unit_breakdown": unit_rents,
-        },
-        "operating_expenses": {
-            "monthly_breakdown": monthly_expenses,
-            "total_monthly": total_monthly_expenses,
-            "total_annual": round(annual_expenses, 2),
         },
         "returns": {
             "roi_on_budget_pct": round(roi_on_budget, 1),
