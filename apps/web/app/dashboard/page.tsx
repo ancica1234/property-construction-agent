@@ -65,7 +65,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, {user?.full_name?.split(' ')[0]}</h1>
+          <h1 className="text-3xl font-bold">Welcome back</h1>
           <p className="text-muted-foreground mt-1">Here&apos;s your portfolio overview</p>
         </div>
         <Button onClick={() => router.push('/portfolio')}>
