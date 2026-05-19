@@ -31,7 +31,7 @@ export default function LoginPage() {
     try {
       const res = await login(data.email, data.password)
       toast.success(`Welcome back, ${res.user.full_name}!`)
-      router.push('/dashboard')
+      router.push(res.user.role === 'contractor' ? '/contractor' : '/dashboard')
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Login failed')
     } finally {
