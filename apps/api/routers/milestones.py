@@ -16,6 +16,39 @@ class MilestoneUpdate(BaseModel):
     notes: Optional[str] = None
 
 
+class MilestoneCreate(BaseModel):
+    portfolio_id: int = 1
+    contractor: str = "D & L Builders inc."
+    deliverable: str
+    amount: float
+    unit: str = "general"
+    order: int = 99
+
+
+@router.post("/")
+def create_milestone(
+    payload: MilestoneCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    m = PaymentMilestone(
+        portfolio_id=payload.portfolio_id,
+        contractor=payload.contractor,
+        deliverable=payload.deliverable,
+        amount=payload.amount,
+        unit=payload.unit,
+        order=payload.order,
+        status="pending",
+    )
+    db.add(m)
+    db.commit()
+    db.refresh(m)
+    return {"id": m.id, "order": m.order, "contractor": m.contractor,
+            "deliverable": m.deliverable, "amount": m.amount, "unit": m.unit,
+            "status": m.status, "notes": m.notes,
+            "completed_at": m.completed_at, "paid_at": m.paid_at}
+
+
 @router.get("/summary")
 def milestone_summary(
     portfolio_id: int = 1,

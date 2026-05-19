@@ -8,7 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle, Clock, DollarSign, Loader2, AlertCircle, Circle, Wrench } from 'lucide-react'
+import { CheckCircle, Clock, DollarSign, Loader2, AlertCircle, Circle, Wrench, Plus } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending:     { label: 'Pending',     color: 'bg-gray-100 text-gray-600',       icon: Circle },
@@ -27,6 +30,8 @@ const UNIT_COLORS: Record<string, string> = {
 export default function SchedulePage() {
   const qc = useQueryClient()
   const [filter, setFilter] = useState('all')
+  const [addOpen, setAddOpen] = useState(false)
+  const [form, setForm] = useState({ deliverable: '', amount: '', unit: 'ally' })
 
   const { data: milestones = [], isLoading } = useQuery<any[]>({
     queryKey: ['milestones'],
@@ -49,6 +54,18 @@ export default function SchedulePage() {
     onError: () => toast.error('Failed to update status'),
   })
 
+  const addMilestone = useMutation({
+    mutationFn: (data: any) => api.post('/api/milestones/', data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['milestones'] })
+      qc.invalidateQueries({ queryKey: ['milestone-summary'] })
+      toast.success('Milestone added')
+      setAddOpen(false)
+      setForm({ deliverable: '', amount: '', unit: 'ally' })
+    },
+    onError: () => toast.error('Failed to add milestone'),
+  })
+
   const nextStatus = (current: string) => {
     const flow: Record<string, string> = {
       pending: 'in_progress',
@@ -64,9 +81,12 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Payment Schedule</h1>
-        <p className="text-muted-foreground mt-1">D & L Builders inc. — Contract $193,840</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Payment Schedule</h1>
+          <p className="text-muted-foreground mt-1">D & L Builders inc. — Contract $193,840</p>
+        </div>
+        <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-2" />Add Milestone</Button>
       </div>
 
       {/* Summary Cards */}
@@ -192,6 +212,34 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
       )}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Milestone</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Deliverable</Label>
+              <Input value={form.deliverable} onChange={e => setForm({...form, deliverable: e.target.value})} placeholder="Upon framing is complete for Ally unit" />
+            </div>
+            <div className="space-y-2">
+              <Label>Unit</Label>
+              <select className="w-full border rounded-md px-3 py-2 text-sm" value={form.unit} onChange={e => setForm({...form, unit: e.target.value})}>
+                <option value="ally">Ally</option>
+                <option value="adu">ADU</option>
+                <option value="main">Main</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount ($)</Label>
+              <Input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} placeholder="5000" />
+            </div>
+            <Button className="w-full" disabled={addMilestone.isPending || !form.deliverable || !form.amount}
+              onClick={() => addMilestone.mutate({ portfolio_id: 1, contractor: 'D & L Builders inc.', deliverable: form.deliverable, amount: Number(form.amount), unit: form.unit, order: milestones.length + 1 })}>
+              {addMilestone.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Add Milestone
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
