@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from db.session import init_db
-from routers import auth, portfolio, properties, budget, contractors, progress, agent
+from routers import auth, portfolio, properties, budget, contractors, progress, agent, milestones
 from core.config import settings
 
 
@@ -35,6 +35,7 @@ app.include_router(budget.router,      prefix="/api/budget",      tags=["budget"
 app.include_router(contractors.router, prefix="/api/contractors", tags=["contractors"])
 app.include_router(progress.router,    prefix="/api/progress",    tags=["progress"])
 app.include_router(agent.router,       prefix="/api/agent",       tags=["agent"])
+app.include_router(milestones.router,   prefix="/api/milestones",  tags=["milestones"])
 
 
 @app.get("/health")
