@@ -36,6 +36,7 @@ export default function Navbar() {
             <Link href="/portfolio" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Portfolio</Link>
             <Link href="/portfolio/upload" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Import Expenses</Link>
             <Link href="/agents" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Intelligence</Link>
+            <Link href="/schedule" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Payment Schedule</Link>
           </>)}
           {user?.role === 'contractor' && (
             <Link href="/contractor" className="text-sm text-muted-foreground hover:text-foreground transition-colors">My Jobs</Link>
