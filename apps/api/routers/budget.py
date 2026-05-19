@@ -13,10 +13,20 @@ router = APIRouter()
 
 
 def get_property_for_user(property_id: int, current_user, db: Session):
-    prop = db.query(Property).join(Portfolio).filter(
-        Property.id == property_id,
-        Portfolio.owner_id == current_user.id
-    ).first()
+    # Investors: must own the portfolio
+    if current_user.role == "investor":
+        prop = db.query(Property).join(Portfolio).filter(
+            Property.id == property_id,
+            Portfolio.owner_id == current_user.id
+        ).first()
+    else:
+        # Contractors: must be assigned to the property
+        from models.contractor import ContractorAssignment
+        assignment = db.query(ContractorAssignment).filter(
+            ContractorAssignment.property_id == property_id,
+            ContractorAssignment.contractor_id == current_user.id
+        ).first()
+        prop = db.query(Property).filter(Property.id == property_id).first() if assignment else None
     if not prop:
         raise HTTPException(status_code=404, detail="Property not found")
     return prop
