@@ -7,7 +7,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle, Clock, Loader2, AlertCircle, Circle, Wrench } from 'lucide-react'
+import { CheckCircle, Clock, Loader2, AlertCircle, Circle, Wrench, Copy, ClipboardCheck } from 'lucide-react'
+import { useState } from 'react'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending:     { label: 'Pending',     color: 'bg-gray-100 text-gray-600',     icon: Circle },
@@ -46,14 +47,39 @@ export default function ContractorSchedulePage() {
     onError: () => toast.error('Failed to update'),
   })
 
+  const [copied, setCopied] = useState(false)
+
+  const copyInvoice = () => {
+    const completed = milestones.filter((m: any) => m.status === 'complete')
+    if (completed.length === 0) {
+      toast.error('No completed milestones to invoice')
+      return
+    }
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const invoiceNum = `INV-${String(Date.now()).slice(-4)}`
+    const lines = completed.map((m: any) => `  #${String(m.order).padEnd(3)} ${m.deliverable.substring(0, 55).padEnd(55)} $${m.amount.toLocaleString()}`).join('\n')
+    const total = completed.reduce((s: number, m: any) => s + m.amount, 0)
+    const text = `INVOICE — D & L Builders inc.\nDate: ${date}\nInvoice #: ${invoiceNum}\n\nProperty: 32nd Street Triplex — 4575/4577/4773 32nd St, San Diego CA\n\nCompleted Milestones:\n${lines}\n\n${'─'.repeat(70)}\nTOTAL DUE: $${total.toLocaleString()}\n\nPlease remit payment to:\nD & L Builders inc.`
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    toast.success(`Invoice copied! ${completed.length} milestones — $${total.toLocaleString()}`)
+    setTimeout(() => setCopied(false), 3000)
+  }
+
   const paidPct = summary ? (summary.total_paid / summary.total_contract * 100) : 0
   const completePct = summary ? ((summary.total_paid + summary.total_complete_unpaid) / summary.total_contract * 100) : 0
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">My Payment Schedule</h1>
-        <p className="text-muted-foreground mt-1">D & L Builders inc. — Contract $193,840</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">My Payment Schedule</h1>
+          <p className="text-muted-foreground mt-1">D & L Builders inc. — Contract $193,840</p>
+        </div>
+        <Button onClick={copyInvoice} variant={copied ? 'default' : 'outline'} className="gap-2">
+          {copied ? <ClipboardCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? 'Copied!' : 'Copy Invoice'}
+        </Button>
       </div>
 
       {/* Summary Cards */}
