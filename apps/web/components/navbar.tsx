@@ -38,9 +38,10 @@ export default function Navbar() {
             <Link href="/agents" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Intelligence</Link>
             <Link href="/schedule" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Payment Schedule</Link>
           </>)}
-          {user?.role === 'contractor' && (
+          {user?.role === 'contractor' && (<>
             <Link href="/contractor" className="text-sm text-muted-foreground hover:text-foreground transition-colors">My Jobs</Link>
-          )}
+            <Link href="/contractor/schedule" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Payment Schedule</Link>
+          </>)}
         </nav>
 
         <div className="flex items-center gap-3 ml-auto">
